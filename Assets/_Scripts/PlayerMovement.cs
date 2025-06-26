@@ -5,10 +5,12 @@ public class PlayerMovement : MonoBehaviour
     protected Rigidbody2D body;
     protected Animator anim;
     protected BoxCollider2D boxCollider;
-    [SerializeField] protected float speed = 5f;
-    [SerializeField] protected float jumpSpeed = 7f;
+    [SerializeField] protected float speed = 10f;
+    [SerializeField] protected float jumpSpeed = 20f;
     [SerializeField] LayerMask groundLayer;
     [SerializeField] LayerMask wallLayer;
+    protected float wallJumpCooldown;
+    protected float horizontalInput;
 
 
     private void Awake()
@@ -39,21 +41,16 @@ public class PlayerMovement : MonoBehaviour
     protected virtual void Movement()
     {
         //basic left right movement
-        float horizontalInput = Input.GetAxis("Horizontal");
-        this.body.velocity = new Vector2(horizontalInput * this.speed, this.body.velocity.y);
+        this.horizontalInput = Input.GetAxis("Horizontal");        
                        
         //This is for flipping player when moving
-        if (horizontalInput > 0.01f)
+        if (this.horizontalInput > 0.01f)
             transform.localScale = Vector3.one;
-        else if (horizontalInput < -0.01f)
+        else if (this.horizontalInput < -0.01f)
             transform.localScale = new Vector3(-1f, 1f, 1f);
 
-        //This is for jumping
-        if (Input.GetKey(KeyCode.Space))
-            this.Jump();
-
         //Add animation for running movement
-        if (horizontalInput != 0)
+        if (this.horizontalInput != 0)
             this.anim.SetBool("IsRun", true);
         else
             this.anim.SetBool("IsRun", false);
@@ -61,10 +58,24 @@ public class PlayerMovement : MonoBehaviour
         //Add animation for Jumping when press jump or falling
             this.anim.SetBool("IsGrounded", this.IsGrounded());
 
+        if (wallJumpCooldown > 0.2f)
+        {
+            this.body.velocity = new Vector2(this.horizontalInput * this.speed, this.body.velocity.y);
 
+            if (OnWall() && !IsGrounded())
+            {
+                body.gravityScale = 0;
+                body.velocity = Vector2.zero;
+            }
+            else
+                body.gravityScale = 7f;
 
-
-
+            //This is for jumping
+            if (Input.GetKey(KeyCode.Space))
+                this.Jump();
+        }
+        else
+            this.wallJumpCooldown += Time.deltaTime;
     }
 
     protected virtual void Jump()
@@ -76,10 +87,18 @@ public class PlayerMovement : MonoBehaviour
         }
         else if(this.OnWall() && !this.IsGrounded())
         {
+            if(this.horizontalInput == 0)
+            {
+                this.body.velocity = new Vector2(-Mathf.Sign(transform.localScale.x) * 10f, 0);
+                this.body.transform.localScale = new Vector3(-Mathf.Sign(body.transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            }
+            else
+                this.body.velocity = new Vector2(-Mathf.Sign(transform.localScale.x) * 3f, 6f);
+
+            this.wallJumpCooldown = 0;
 
         }
     }
-
 
     protected void OnCollisionEnter2D(Collision2D collision)
     {
