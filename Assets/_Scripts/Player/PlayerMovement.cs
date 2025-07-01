@@ -37,7 +37,6 @@ public class PlayerMovement : MonoBehaviour
     {
         this.boxCollider = GetComponent<BoxCollider2D>();
     }
-
     protected virtual void Movement()
     {
         //basic left right movement
@@ -68,7 +67,7 @@ public class PlayerMovement : MonoBehaviour
                 body.velocity = Vector2.zero;
             }
             else
-                body.gravityScale = 7f;
+                body.gravityScale = 7f; ;
 
             //This is for jumping
             if (Input.GetKey(KeyCode.Space))
@@ -77,7 +76,6 @@ public class PlayerMovement : MonoBehaviour
         else
             this.wallJumpCooldown += Time.deltaTime;
     }
-
     protected virtual void Jump()
     {
         if(this.IsGrounded())
@@ -99,21 +97,18 @@ public class PlayerMovement : MonoBehaviour
 
         }
     }
-
-    protected void OnCollisionEnter2D(Collision2D collision)
-    {
-
-    }
-
     protected virtual bool IsGrounded()
     {
         RaycastHit2D rayCastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.down, 0.1f, this.groundLayer);        
         return rayCastHit.collider != null;
     }
-
     protected virtual bool OnWall()
     {
         RaycastHit2D rayCastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(transform.localScale.x, 0), 0.1f, this.wallLayer);
         return rayCastHit.collider != null;
+    }
+    public virtual bool CanAttack()
+    {
+        return horizontalInput == 0 && IsGrounded() && !OnWall();
     }
 }
